@@ -1,6 +1,6 @@
-export async function search(query) {
+async function search(query) {
   const res = await fetch("https://ppv.wtf/api/streams", { parse: "json" });
-  const json = res; // Already parsed due to parse: "json"
+  const json = res;
 
   if (!json || !json.streams) return [];
 
@@ -22,9 +22,8 @@ export async function search(query) {
   return results;
 }
 
-export async function load(url) {
-  const res = await fetch(url, { parse: "text" });
-  const html = res;
+async function load(url) {
+  const html = await fetch(url, { parse: "text" });
 
   const iframeMatch = html.match(/<iframe[^>]+src=["']([^"']+)["']/);
   
