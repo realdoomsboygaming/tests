@@ -12,7 +12,7 @@
   "quality": "1080p",
   "baseUrl": "https://ppv.wtf/",
   "searchBaseUrl": "https://ppv.wtf/api/streams",
-  "scriptUrl": "https://your-host.com/ppvwtf.js",
+  "scriptUrl": "https://raw.githubusercontent.com/realdoomsboygaming/tests/refs/heads/main/ppv/ppvwtf.js",
   "type": "movies",
   "asyncJS": true
 }
