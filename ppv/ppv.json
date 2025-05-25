@@ -1,0 +1,18 @@
+{
+  "sourceName": "PPV.wtf",
+  "iconUrl": "https://ppv.wtf/favicon.ico",
+  "author": {
+    "name": "doomsboygaming",
+    "icon": "https://github.com/doomsboygaming.png",
+    "url": "https://github.com/doomsboygaming"
+  },
+  "version": "1.0.0",
+  "language": "English",
+  "streamType": "HLS",
+  "quality": "1080p",
+  "baseUrl": "https://ppv.wtf/",
+  "searchBaseUrl": "https://ppv.wtf/api/streams",
+  "scriptUrl": "https://your-host.com/ppvwtf.js",
+  "type": "movies",
+  "asyncJS": true
+}
