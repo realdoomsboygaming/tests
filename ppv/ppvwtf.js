@@ -1,9 +1,8 @@
-async function searchResults(query) {
+export async function searchResults(query) {
     try {
         const res = await fetch("https://ppv.wtf/");
-        const html = await res.text();
+        const html = res.body;
 
-        // Regular expression to find all live stream links
         const regex = /href="(\/live\/[^"]+)"/g;
         const matches = [...html.matchAll(regex)];
 
@@ -33,61 +32,45 @@ async function searchResults(query) {
     }
 }
 
-async function extractDetails(url) {
+export async function extractDetails(url) {
     try {
         const res = await fetch(url);
-        const html = await res.text();
+        const html = res.body;
 
-        // Extract description from the page's title tag
         const titleMatch = html.match(/<title>(.*?)<\/title>/);
-        const description = titleMatch ? titleMatch[1] : "No description available";
-
-        return JSON.stringify([{
-            description: description,
-            aliases: "",
-            airdate: ""
-        }]);
-    } catch (error) {
-        console.error("Error in extractDetails:", error);
-        return JSON.stringify([{
-            description: "Error loading description",
-            aliases: "",
-            airdate: ""
-        }]);
-    }
-}
-
-async function extractEpisodes(url) {
-    try {
-        // Since each URL corresponds to a single live event, we return one episode
-        return JSON.stringify([{
-            href: url,
-            number: 1,
-            title: "Live Stream"
-        }]);
-    } catch (error) {
-        console.error("Error in extractEpisodes:", error);
-        return JSON.stringify([]);
-    }
-}
-
-async function extractStreamUrl(url) {
-    try {
-        const res = await fetch(url);
-        const html = await res.text();
-
-        // Extract the iframe src containing the stream
-        const iframeMatch = html.match(/<iframe[^>]+src="([^"]+)"[^>]*>/);
-        if (!iframeMatch) return null;
-
-        const streamUrl = iframeMatch[1];
+        const title = titleMatch ? titleMatch[1].replace(/\s*\|\s*PPV\.wtf/, "") : "Unknown Title";
 
         return JSON.stringify({
-            stream: streamUrl,
-            subtitles: ""
+            title: title,
+            description: "Live stream from PPV.wtf",
+            image: "https://ppv.wtf/favicon.ico"
         });
     } catch (error) {
-        console.error("Error in extractStreamUrl:", error);
-        return null;
+        console.error("Error in extractDetails:", error);
+        return JSON.stringify({});
+    }
+}
+
+export async function extractEpisodes(url) {
+    // This site is for live streams, no episodes — return empty
+    return JSON.stringify([]);
+}
+
+export async function extractStream(url) {
+    try {
+        const res = await fetch(url);
+        const html = res.body;
+
+        const sourceMatch = html.match(/source src="([^"]+)"/);
+        if (sourceMatch) {
+            return JSON.stringify({
+                stream: sourceMatch[1]
+            });
+        }
+
+        return JSON.stringify({});
+    } catch (error) {
+        console.error("Error in extractStream:", error);
+        return JSON.stringify({});
     }
 }
