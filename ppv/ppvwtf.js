@@ -1,21 +1,19 @@
-// ppvwtf.js
+export async function search(query) {
+  const res = await fetch("https://ppv.wtf/api/streams");
+  const json = await res.json();
 
-// This function searches for live sports streams based on the user's query.
-async function search(query) {
-  const response = await fetch('https://ppv.wtf/api/streams');
-  const data = await response.json();
-
-  if (!data.success) return [];
+  if (!json || !json.streams) return [];
 
   const results = [];
 
-  for (const category of data.streams) {
+  for (const category of json.streams) {
     for (const stream of category.streams) {
       if (stream.name.toLowerCase().includes(query.toLowerCase())) {
         results.push({
           title: stream.name,
-          image: stream.poster,
-          url: `https://ppv.wtf/live/${stream.uri_name}`
+          url: `https://ppv.wtf/live/${stream.uri_name}`,
+          poster: stream.poster,
+          description: category.name
         });
       }
     }
@@ -24,17 +22,14 @@ async function search(query) {
   return results;
 }
 
-// This function extracts the direct stream URL from the stream page.
-async function load(url) {
-  const response = await fetch(url);
-  const html = await response.text();
-
+export async function load(url) {
+  const html = await (await fetch(url)).text();
   const iframeMatch = html.match(/<iframe[^>]+src=["']([^"']+)["']/);
-  if (iframeMatch) {
-    return {
-      stream: iframeMatch[1]
-    };
-  }
+  
+  if (!iframeMatch) return null;
 
-  return null;
+  return {
+    type: "hls",
+    stream: iframeMatch[1]
+  };
 }
