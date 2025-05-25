@@ -11,6 +11,6 @@
   "baseUrl": "https://ppv.wtf/",
   "searchBaseUrl": "https://ppv.wtf/api/streams",
   "scriptUrl": "https://raw.githubusercontent.com/realdoomsboygaming/tests/refs/heads/main/ppv/ppvwtf.js",
-  "type": "movies",
+  "type": "sports",
   "asyncJS": true
 }
