@@ -2,9 +2,7 @@
   "sourceName": "PPV.wtf",
   "iconUrl": "https://ppv.wtf/favicon.ico",
   "author": {
-    "name": "doomsboygaming",
-    "icon": "https://github.com/doomsboygaming.png",
-    "url": "https://github.com/doomsboygaming"
+    "name": "doomsboygaming"
   },
   "version": "1.0.0",
   "language": "English",
