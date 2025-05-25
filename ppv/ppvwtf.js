@@ -1,14 +1,15 @@
-// Sora module for fetching live stream events from PPV.wtf
+// ppvwtf.js
 
-async function searchResults(query) {
-  const res = await fetch("https://ppv.wtf/api/streams");
-  const json = await res.json();
+// This function searches for live sports streams based on the user's query.
+async function search(query) {
+  const response = await fetch('https://ppv.wtf/api/streams');
+  const data = await response.json();
 
-  if (!json.success) return [];
+  if (!data.success) return [];
 
   const results = [];
 
-  for (const category of json.streams) {
+  for (const category of data.streams) {
     for (const stream of category.streams) {
       if (stream.name.toLowerCase().includes(query.toLowerCase())) {
         results.push({
@@ -23,12 +24,16 @@ async function searchResults(query) {
   return results;
 }
 
-async function extractStreamUrl(url) {
-  const page = await fetch(url).then(res => res.text());
+// This function extracts the direct stream URL from the stream page.
+async function load(url) {
+  const response = await fetch(url);
+  const html = await response.text();
 
-  const match = page.match(/<iframe[^>]+src=["']([^"']+)["']/);
-  if (match) {
-    return match[1]; // Return iframe src, usually the actual stream player
+  const iframeMatch = html.match(/<iframe[^>]+src=["']([^"']+)["']/);
+  if (iframeMatch) {
+    return {
+      stream: iframeMatch[1]
+    };
   }
 
   return null;
