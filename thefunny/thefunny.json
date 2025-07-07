@@ -1,1 +1,19 @@
-
+{
+    "sourceName": "Oppai Stream",
+    "iconUrl": "https://oppai.stream/favicon.ico",
+    "author": {
+        "name": "doomsboygaming",
+        "icon": "https://github.com/favicon.ico"
+    },
+    "version": "1.0.0",
+    "language": "Japanese (SUB)",
+    "streamType": "MP4",
+    "quality": "1080p",
+    "baseUrl": "https://oppai.stream/",
+    "searchBaseUrl": "https://oppai.stream/search",
+    "scriptUrl": "https://raw.githubusercontent.com/realdoomsboygaming/tests/refs/heads/main/thefunny/thefunny.js",
+    "asyncJS": false,
+    "streamAsyncJS": false,
+    "softsub": true,
+    "type": "anime"
+} 
