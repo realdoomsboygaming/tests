@@ -47,21 +47,34 @@ async function extractDetails(url) {
         
         const slug = slugMatch[1];
         
-        // Attempt to get details from API (educated guess on endpoint)
-        const response = await fetchv2(`https://kaa.to/api/anime/${slug}`, {
+        // Since /api/anime/{slug} doesn't exist, we need to get details from search
+        // This is a workaround - search for the anime title to get details
+        const searchKeyword = slug.replace(/-/g, ' ').replace(/\b\w+\b$/, ''); // Remove ID suffix
+        
+        const response = await fetchv2(`https://kaa.to/api/fsearch`, {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Content-Type': 'application/json',
             'Referer': 'https://kaa.to/'
+        }, 'POST', {
+            'query': searchKeyword,
+            'page': 1
         });
         
         const data = await response.json();
         
-        const details = [{
-            description: data.synopsis || data.description || 'No description available',
-            aliases: data.title_en || data.alternative_titles?.join(', ') || 'N/A',
-            airdate: data.year ? `${data.year}` : 'Unknown'
-        }];
+        // Find the matching anime by slug
+        const anime = data.result?.find(item => item.slug === slug);
         
-        return JSON.stringify(details);
+        if (anime) {
+            const details = [{
+                description: anime.synopsis || 'No description available',
+                aliases: anime.title_en || 'N/A',
+                airdate: anime.year ? `${anime.year}` : 'Unknown'
+            }];
+            return JSON.stringify(details);
+        }
+        
+        throw new Error('Anime not found in search results');
         
     } catch (error) {
         console.log('Details error:', error);
@@ -84,54 +97,60 @@ async function extractEpisodes(url) {
         
         const slug = slugMatch[1];
         
-        // Attempt to get episodes from API (educated guess on endpoint)
-        let response;
-        try {
-            response = await fetchv2(`https://kaa.to/api/episodes/${slug}`, {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Referer': 'https://kaa.to/'
-            });
-        } catch (episodeError) {
-            // Try alternative endpoint
-            response = await fetchv2(`https://kaa.to/api/anime/${slug}/episodes`, {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Referer': 'https://kaa.to/'
-            });
-        }
+        // Use the confirmed working episodes API
+        const response = await fetchv2(`https://kaa.to/api/episodes/${slug}`, {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Referer': 'https://kaa.to/'
+        });
         
         const data = await response.json();
         
-        let episodes = [];
-        
-        // Handle different possible response structures
-        if (Array.isArray(data)) {
-            episodes = data;
-        } else if (data.episodes && Array.isArray(data.episodes)) {
-            episodes = data.episodes;
-        } else if (data.result && Array.isArray(data.result)) {
-            episodes = data.result;
+        // Handle the confirmed API response structure
+        if (data.result && Array.isArray(data.result)) {
+            const transformedEpisodes = data.result.map(episode => ({
+                href: `https://kaa.to/watch/${slug}/${episode.episodeNumber}`,
+                number: String(episode.episodeNumber)
+            }));
+            
+            // Sort episodes in ascending order (API returns descending)
+            transformedEpisodes.sort((a, b) => parseInt(a.number) - parseInt(b.number));
+            
+            return JSON.stringify(transformedEpisodes);
         }
         
-        const transformedEpisodes = episodes.map((episode, index) => ({
-            href: `https://kaa.to/watch/${slug}/${episode.number || episode.episode || (index + 1)}`,
-            number: String(episode.number || episode.episode || (index + 1))
-        }));
-        
-        // If no episodes found, generate based on episode_count from search results
-        if (transformedEpisodes.length === 0) {
-            // Generate episodes 1-12 as fallback (common anime episode count)
-            for (let i = 1; i <= 12; i++) {
-                transformedEpisodes.push({
-                    href: `https://kaa.to/watch/${slug}/${i}`,
-                    number: String(i)
-                });
-            }
-        }
-        
-        return JSON.stringify(transformedEpisodes);
+        throw new Error('Invalid episodes response structure');
         
     } catch (error) {
         console.log('Episodes error:', error);
+        
+        // Fallback: Try to get episode count from search and generate episode list
+        try {
+            const searchKeyword = url.match(/\/anime\/(.+)$/)[1].replace(/-/g, ' ').replace(/\b\w+\b$/, '');
+            const searchResponse = await fetchv2(`https://kaa.to/api/fsearch`, {
+                'Content-Type': 'application/json',
+                'Referer': 'https://kaa.to/'
+            }, 'POST', {
+                'query': searchKeyword,
+                'page': 1
+            });
+            
+            const searchData = await searchResponse.json();
+            const anime = searchData.result?.find(item => item.slug === url.match(/\/anime\/(.+)$/)[1]);
+            
+            if (anime && anime.episode_count) {
+                const fallbackEpisodes = [];
+                for (let i = 1; i <= anime.episode_count; i++) {
+                    fallbackEpisodes.push({
+                        href: `https://kaa.to/watch/${anime.slug}/${i}`,
+                        number: String(i)
+                    });
+                }
+                return JSON.stringify(fallbackEpisodes);
+            }
+        } catch (fallbackError) {
+            console.log('Fallback episodes error:', fallbackError);
+        }
+        
         return JSON.stringify([]);
     }
 }
