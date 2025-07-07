@@ -1,7 +1,12 @@
+// Oppai Stream Source for Sora
+// Author: doomsboygaming
+// Website: https://oppai.stream
+// Content: Anime/Hentai with English subtitles
+
 const OPPAI_CONFIG = {
     name: "Oppai Stream",
     author: "doomsboygaming", 
-    baseUrl: "https://oppai.stream",
+    baseUrl: "https://oppai.stream/",
     defaultQuality: "1080p",
     language: "Japanese",
     subtitles: "English VTT",
@@ -14,38 +19,57 @@ const OPPAI_CONFIG = {
  * @returns {Array} Array of search results
  */
 function searchResults(query) {
-    const searchUrl = `${OPPAI_CONFIG.baseUrl}/search?q=${encodeURIComponent(query)}`;
+    // Use the actual AJAX search endpoint
+    const searchUrl = `${OPPAI_CONFIG.baseUrl}actions/search.php?text=${encodeURIComponent(query)}&order=recent&page=1&limit=35&genres=&blacklist=&studio=&ibt=0&swa=1`;
     
     try {
         const response = Http.get(searchUrl);
         const results = [];
         
-        // Parse search grid results
+        // Debug logging
+        console.log('Oppai Stream search URL:', searchUrl);
+        console.log('Response received, looking for episodes...');
+        
+        // The API response contains HTML fragments with episode cards
         const episodeElements = response.selectAll('.in-grid.episode-shown');
+        
+        console.log('Found episode elements:', episodeElements.length);
         
         for (const element of episodeElements) {
             const linkElement = element.selectFirst('a');
-            if (!linkElement) continue;
+            if (!linkElement) {
+                console.log('No link element found in episode');
+                continue;
+            }
             
             const url = linkElement.attr('href');
             const imgElement = element.selectFirst('.cover-img-in');
-            const titleElement = element.selectFirst('.title.inline');
-            const episodeElement = element.selectFirst('.ep.inline');
-            const descElement = element.selectFirst('desc');
             
-            if (!titleElement || !url) continue;
+            // Correct title structure: <h5 class="title-ep"><font class="title inline">Title</font> <font class="ep inline">Episode</font></h5>
+            const titleElement = element.selectFirst('.title-ep .title.inline');
+            const episodeElement = element.selectFirst('.title-ep .ep.inline');
+            
+            if (!titleElement || !url) {
+                console.log('Missing title or URL for episode');
+                continue;
+            }
             
             // Extract data from element attributes  
-            const idElement = element.attr('id');
-            const folder = element.attr('folder');
             const episodeNum = element.attr('ep');
             const tags = element.attr('tags');
             const description = element.attr('desc');
+            const showName = element.attr('name');
+            
+            const title = titleElement.text().trim();
+            const episode = episodeElement ? episodeElement.text().trim() : episodeNum;
+            const fullUrl = url.startsWith('http') ? url : OPPAI_CONFIG.baseUrl + url.replace(/^\//, '');
+            
+            console.log('Found episode:', title, 'Ep', episode);
             
             results.push({
-                title: titleElement.text().trim(),
-                episode: episodeElement ? episodeElement.text().trim() : episodeNum,
-                url: url.startsWith('http') ? url : OPPAI_CONFIG.baseUrl + url,
+                title: title,
+                episode: episode,
+                url: fullUrl,
                 image: imgElement ? imgElement.attr('src') : null,
                 description: description || '',
                 tags: tags ? tags.split(',') : [],
@@ -53,10 +77,12 @@ function searchResults(query) {
             });
         }
         
+        console.log('Total search results found:', results.length);
         return results;
         
     } catch (error) {
         console.error('Oppai Stream search error:', error);
+        console.error('Error details:', error.message);
         return [];
     }
 }
@@ -152,8 +178,8 @@ function extractEpisodes(url) {
             
             const episodeUrl = linkElement.attr('href');
             const imgElement = element.selectFirst('.cover-img-in');
-            const titleElement = element.selectFirst('.title.inline');
-            const episodeElement = element.selectFirst('.ep.inline');
+            const titleElement = element.selectFirst('.title-ep .title.inline');
+            const episodeElement = element.selectFirst('.title-ep .ep.inline');
             
             if (!titleElement || !episodeUrl) continue;
             
@@ -162,7 +188,7 @@ function extractEpisodes(url) {
             episodes.push({
                 title: titleElement.text().trim(),
                 episode: episodeNumber,
-                url: episodeUrl.startsWith('http') ? episodeUrl : OPPAI_CONFIG.baseUrl + episodeUrl,
+                url: episodeUrl.startsWith('http') ? episodeUrl : OPPAI_CONFIG.baseUrl + episodeUrl.replace(/^\//, ''),
                 image: imgElement ? imgElement.attr('src') : null
             });
         }
@@ -314,4 +340,4 @@ if (typeof module !== 'undefined' && module.exports) {
         extractStreamUrl,
         config: OPPAI_CONFIG
     };
-}
+} 
