@@ -1,15 +1,12 @@
-// Kaa.to Source Module for Sora
-// API-based anime streaming source
-
 async function searchResults(keyword) {
     try {
         const encodedKeyword = encodeURIComponent(keyword);
         
-        // Based on the API structure shown, search endpoint
         const response = await fetchv2('https://kaa.to/api/fsearch', {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Content-Type': 'application/json',
-            'Referer': 'https://kaa.to/'
+            'Referer': 'https://kaa.to/',
+            'x-origin': 'kaa.to'
         }, 'POST', {
             query: keyword,
             page: 1
@@ -54,7 +51,8 @@ async function extractDetails(url) {
         const response = await fetchv2('https://kaa.to/api/fsearch', {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Content-Type': 'application/json',
-            'Referer': 'https://kaa.to/'
+            'Referer': 'https://kaa.to/',
+            'x-origin': 'kaa.to'
         }, 'POST', {
             query: searchKeyword,
             page: 1
@@ -100,7 +98,8 @@ async function extractEpisodes(url) {
         // Use the confirmed working episodes API
         const response = await fetchv2('https://kaa.to/api/episodes/' + slug, {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Referer': 'https://kaa.to/'
+            'Referer': 'https://kaa.to/',
+            'x-origin': 'kaa.to'
         });
         
         const data = await response.json();
@@ -128,7 +127,8 @@ async function extractEpisodes(url) {
             const searchKeyword = url.match(/\/anime\/(.+)$/)[1].replace(/-/g, ' ').replace(/\b\w+\b$/, '');
             const searchResponse = await fetchv2('https://kaa.to/api/fsearch', {
                 'Content-Type': 'application/json',
-                'Referer': 'https://kaa.to/'
+                'Referer': 'https://kaa.to/',
+                'x-origin': 'kaa.to'
             }, 'POST', {
                 query: searchKeyword,
                 page: 1
@@ -178,7 +178,8 @@ async function extractStreamUrl(url) {
             try {
                 const response = await fetchv2(endpoint, {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Referer': 'https://kaa.to/'
+                    'Referer': 'https://kaa.to/',
+                    'x-origin': 'kaa.to'
                 });
                 
                 const data = await response.json();
@@ -211,7 +212,8 @@ async function extractStreamUrl(url) {
             const response = await fetchv2('https://kaa.to/api/episode/stream', {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'Content-Type': 'application/json',
-                'Referer': 'https://kaa.to/'
+                'Referer': 'https://kaa.to/',
+                'x-origin': 'kaa.to'
             }, 'POST', {
                 slug: slug,
                 episode: parseInt(episode)
