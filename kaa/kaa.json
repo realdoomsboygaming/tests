@@ -1,0 +1,19 @@
+{
+   "sourceName": "Kaa.to",
+   "iconUrl": "https://kaa.to/favicon.ico",
+   "author": {
+       "name": "Community",
+       "icon": "https://github.com/favicon.ico"
+   },
+   "version": "1.0.0",
+   "language": "Japanese (SUB)",
+   "streamType": "HLS",
+   "quality": "1080p",
+   "baseUrl": "https://kaa.to/",
+   "searchBaseUrl": "https://kaa.to/api/fsearch",
+   "scriptUrl": "https://raw.githubusercontent.com/your-repo/kaa-to-source.js",
+   "asyncJS": true,
+   "streamAsyncJS": false,
+   "softsub": false,
+   "type": "anime"
+} 
