@@ -1,7 +1,11 @@
+// Kaa.to Source Module for Sora
+// API-based anime streaming source
+
 async function searchResults(keyword) {
     try {
         const encodedKeyword = encodeURIComponent(keyword);
         
+        // Based on the API structure shown, search endpoint
         const response = await fetchv2('https://kaa.to/api/fsearch', {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Content-Type': 'application/json',
@@ -21,7 +25,7 @@ async function searchResults(keyword) {
         const transformedResults = data.result.map(anime => ({
             title: anime.title || 'Unknown Title',
             image: anime.poster ? 
-                   'https://kaa.to/api/image/' + (anime.poster.hq || anime.poster.sm) : 
+                   'https://kaa.to/api/image/' + (anime.poster.hq || anime.poster.sm) + '.jpg' : 
                    'https://via.placeholder.com/300x400',
             href: 'https://kaa.to/anime/' + anime.slug
         }));
@@ -106,13 +110,14 @@ async function extractEpisodes(url) {
         
         // Handle the confirmed API response structure
         if (data.result && Array.isArray(data.result)) {
-            const transformedEpisodes = data.result.map(episode => ({
-                href: 'https://kaa.to/watch/' + slug + '/' + episode.episodeNumber,
-                number: String(episode.episodeNumber)
-            }));
+            // Sort episodes by internal episodeNumber first (API returns descending)
+            const sortedEpisodes = data.result.sort((a, b) => a.episodeNumber - b.episodeNumber);
             
-            // Sort episodes in ascending order (API returns descending)
-            transformedEpisodes.sort((a, b) => parseInt(a.number) - parseInt(b.number));
+            // Use array index + 1 as actual episode number, but keep internal ID for URL
+            const transformedEpisodes = sortedEpisodes.map((episode, index) => ({
+                href: 'https://kaa.to/watch/' + slug + '/' + episode.episodeNumber,
+                number: String(index + 1)  // Sequential episode numbers starting from 1
+            }));
             
             return JSON.stringify(transformedEpisodes);
         }
