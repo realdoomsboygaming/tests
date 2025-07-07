@@ -11,7 +11,7 @@
    "quality": "1080p",
    "baseUrl": "https://kaa.to/",
    "searchBaseUrl": "https://kaa.to/api/fsearch",
-   "scriptUrl": "https://raw.githubusercontent.com/your-repo/kaa-to-source.js",
+   "scriptUrl": "https://raw.githubusercontent.com/realdoomsboygaming/tests/refs/heads/main/kaa/kaa.js",
    "asyncJS": true,
    "streamAsyncJS": false,
    "softsub": false,
