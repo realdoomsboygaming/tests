@@ -6,13 +6,13 @@ async function searchResults(keyword) {
         const encodedKeyword = encodeURIComponent(keyword);
         
         // Based on the API structure shown, search endpoint
-        const response = await fetchv2(`https://kaa.to/api/fsearch`, {
+        const response = await fetchv2('https://kaa.to/api/fsearch', {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Content-Type': 'application/json',
             'Referer': 'https://kaa.to/'
         }, 'POST', {
-            'query': keyword,
-            'page': 1
+            query: keyword,
+            page: 1
         });
         
         const data = await response.json();
@@ -24,9 +24,9 @@ async function searchResults(keyword) {
         const transformedResults = data.result.map(anime => ({
             title: anime.title || 'Unknown Title',
             image: anime.poster ? 
-                   `https://kaa.to/api/image/${anime.poster.hq || anime.poster.sm}` : 
+                   'https://kaa.to/api/image/' + (anime.poster.hq || anime.poster.sm) : 
                    'https://via.placeholder.com/300x400',
-            href: `https://kaa.to/anime/${anime.slug}`
+            href: 'https://kaa.to/anime/' + anime.slug
         }));
         
         return JSON.stringify(transformedResults);
@@ -51,13 +51,13 @@ async function extractDetails(url) {
         // This is a workaround - search for the anime title to get details
         const searchKeyword = slug.replace(/-/g, ' ').replace(/\b\w+\b$/, ''); // Remove ID suffix
         
-        const response = await fetchv2(`https://kaa.to/api/fsearch`, {
+        const response = await fetchv2('https://kaa.to/api/fsearch', {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Content-Type': 'application/json',
             'Referer': 'https://kaa.to/'
         }, 'POST', {
-            'query': searchKeyword,
-            'page': 1
+            query: searchKeyword,
+            page: 1
         });
         
         const data = await response.json();
@@ -69,7 +69,7 @@ async function extractDetails(url) {
             const details = [{
                 description: anime.synopsis || 'No description available',
                 aliases: anime.title_en || 'N/A',
-                airdate: anime.year ? `${anime.year}` : 'Unknown'
+                airdate: anime.year ? anime.year.toString() : 'Unknown'
             }];
             return JSON.stringify(details);
         }
@@ -98,7 +98,7 @@ async function extractEpisodes(url) {
         const slug = slugMatch[1];
         
         // Use the confirmed working episodes API
-        const response = await fetchv2(`https://kaa.to/api/episodes/${slug}`, {
+        const response = await fetchv2('https://kaa.to/api/episodes/' + slug, {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Referer': 'https://kaa.to/'
         });
@@ -108,7 +108,7 @@ async function extractEpisodes(url) {
         // Handle the confirmed API response structure
         if (data.result && Array.isArray(data.result)) {
             const transformedEpisodes = data.result.map(episode => ({
-                href: `https://kaa.to/watch/${slug}/${episode.episodeNumber}`,
+                href: 'https://kaa.to/watch/' + slug + '/' + episode.episodeNumber,
                 number: String(episode.episodeNumber)
             }));
             
@@ -126,12 +126,12 @@ async function extractEpisodes(url) {
         // Fallback: Try to get episode count from search and generate episode list
         try {
             const searchKeyword = url.match(/\/anime\/(.+)$/)[1].replace(/-/g, ' ').replace(/\b\w+\b$/, '');
-            const searchResponse = await fetchv2(`https://kaa.to/api/fsearch`, {
+            const searchResponse = await fetchv2('https://kaa.to/api/fsearch', {
                 'Content-Type': 'application/json',
                 'Referer': 'https://kaa.to/'
             }, 'POST', {
-                'query': searchKeyword,
-                'page': 1
+                query: searchKeyword,
+                page: 1
             });
             
             const searchData = await searchResponse.json();
@@ -141,7 +141,7 @@ async function extractEpisodes(url) {
                 const fallbackEpisodes = [];
                 for (let i = 1; i <= anime.episode_count; i++) {
                     fallbackEpisodes.push({
-                        href: `https://kaa.to/watch/${anime.slug}/${i}`,
+                        href: 'https://kaa.to/watch/' + anime.slug + '/' + i,
                         number: String(i)
                     });
                 }
@@ -163,14 +163,15 @@ async function extractStreamUrl(url) {
             throw new Error('Invalid watch URL format');
         }
         
-        const [, slug, episode] = watchMatch;
+        const slug = watchMatch[1];
+        const episode = watchMatch[2];
         
         // Try different possible stream API endpoints
         const possibleEndpoints = [
-            `https://kaa.to/api/stream/${slug}/${episode}`,
-            `https://kaa.to/api/video/${slug}/${episode}`,
-            `https://kaa.to/api/watch/${slug}/${episode}`,
-            `https://kaa.to/api/episode/${slug}/${episode}/stream`
+            'https://kaa.to/api/episode/' + slug + '/' + episode,
+            'https://kaa.to/api/video/' + slug + '/' + episode,
+            'https://kaa.to/api/watch/' + slug + '/' + episode,
+            'https://kaa.to/api/stream/' + slug + '/' + episode
         ];
         
         for (const endpoint of possibleEndpoints) {
@@ -200,9 +201,39 @@ async function extractStreamUrl(url) {
                 }
                 
             } catch (endpointError) {
-                console.log(`Failed endpoint ${endpoint}:`, endpointError);
+                console.log('Failed endpoint ' + endpoint + ':', endpointError);
                 continue;
             }
+        }
+        
+        // Try POST method to episode stream endpoint
+        try {
+            const response = await fetchv2('https://kaa.to/api/episode/stream', {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Content-Type': 'application/json',
+                'Referer': 'https://kaa.to/'
+            }, 'POST', {
+                slug: slug,
+                episode: parseInt(episode)
+            });
+            
+            const data = await response.json();
+            
+            if (data.stream_url) {
+                return data.stream_url;
+            } else if (data.url) {
+                return data.url;
+            } else if (data.sources && Array.isArray(data.sources)) {
+                const hlsSource = data.sources.find(source => 
+                    source.type === 'hls' || source.url.includes('.m3u8')
+                );
+                if (hlsSource) {
+                    return hlsSource.url;
+                }
+                return data.sources[0].url;
+            }
+        } catch (postError) {
+            console.log('POST stream error:', postError);
         }
         
         throw new Error('No working stream endpoint found');
